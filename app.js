@@ -1,4 +1,3 @@
-// Default sections and items
 let sections = JSON.parse(localStorage.getItem("sections")) || {
     "Alcohol and Spirits": ["Whiskey", "Vodka", "Gin"],
     "Beer and Cider": ["Lager", "Ale", "Cider"],
@@ -15,7 +14,6 @@ let sections = JSON.parse(localStorage.getItem("sections")) || {
     "Sweets": ["Chocolate", "Candy"]
 };
 
-// Store checkbox states
 let selectedItems = JSON.parse(localStorage.getItem("selectedItems")) || {};
 
 function saveSections() {
@@ -48,12 +46,10 @@ function renderList() {
             checkbox.type = "checkbox";
             checkbox.id = section + "_" + index;
 
-            // Restore saved selection state
             if (selectedItems[section] && selectedItems[section].includes(index)) {
                 checkbox.checked = true;
             }
 
-            // Save state when checkbox changes
             checkbox.addEventListener("change", () => {
                 if (!selectedItems[section]) {
                     selectedItems[section] = [];
@@ -94,7 +90,6 @@ function deleteItem(section, index) {
         sections[section].splice(index, 1);
         saveSections();
 
-        // Also remove from selected items
         if (selectedItems[section]) {
             selectedItems[section] = selectedItems[section].filter(i => i !== index);
             saveSelectedItems();
@@ -129,7 +124,6 @@ function showSelected() {
     document.getElementById("output").textContent = result || "No items selected.";
 }
 
-// --- Backup (export) ---
 function exportData() {
     const dataStr = JSON.stringify({ sections, selectedItems }, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
@@ -141,7 +135,6 @@ function exportData() {
     URL.revokeObjectURL(url);
 }
 
-// --- Restore (import) ---
 function importData(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
@@ -158,7 +151,7 @@ function importData(event) {
                 renderList();
                 alert("Data restored successfully!");
             } else {
-                alert("Invalid data format. Please select a valid backup JSON.");
+                alert("Invalid data format.");
             }
         } catch (err) {
             alert("Error reading file: " + err.message);
@@ -169,11 +162,43 @@ function importData(event) {
     reader.readAsText(file);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const importInput = document.getElementById("importFile");
-    if (importInput) {
-        importInput.addEventListener("change", importData);
+function exportSelectedToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Selected Items List", 10, y);
+    y += 10;
+
+    const selectedData = {};
+    for (const section in selectedItems) {
+        selectedData[section] = selectedItems[section].map(i => sections[section][i]);
     }
+
+    doc.setFontSize(12);
+    for (const section in selectedData) {
+        doc.setFont("helvetica", "bold");
+        doc.text(section, 10, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+
+        selectedData[section].forEach(item => {
+            doc.text("- " + item, 14, y);
+            y += 6;
+            if (y > 280) {
+                doc.addPage();
+                y = 10;
+            }
+        });
+        y += 4;
+    }
+
+    doc.save("selected-items.pdf");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("importFile").addEventListener("change", importData);
     renderList();
 });
-
