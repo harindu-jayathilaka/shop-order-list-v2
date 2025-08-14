@@ -1,54 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shop Order List</title>
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json" />
-<link rel="apple-touch-icon" href="icon-192.png" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="Shop Order List" />
-
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shop Order List">
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  h1 { text-align: center; }
-  h2 { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
-  .item { display: flex; align-items: center; margin-bottom: 5px; }
-  input[type="checkbox"] { margin-right: 10px; }
-  button { margin: 5px 0; padding: 6px 12px; font-size: 14px; }
-  #output { white-space: pre-line; margin-top: 10px; background: #f4f4f4; padding: 10px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { text-align: center; }
+    h2 { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .item { display: flex; align-items: center; margin-bottom: 5px; }
+    input[type="checkbox"] { margin-right: 10px; }
+    button { margin: 5px 0; padding: 5px 10px; font-size: 14px; }
+    #output { white-space: pre-line; margin-top: 10px; background: #f4f4f4; padding: 10px; }
 </style>
 </head>
 <body>
 
 <h1>Shop Order List</h1>
-
 <div id="list"></div>
 
 <button onclick="showSelected()">Show Selected Items</button>
-<button onclick="exportData()">Backup</button>
-
-<!-- Hidden file input + visible Restore button -->
-<input type="file" id="importFile" style="display:none;" accept=".json" />
-<button id="restoreBtn" type="button">Restore</button>
+<button onclick="exportData()">Backup Data</button>
+<input type="file" id="importFile" style="display:none">
+<button onclick="document.getElementById('importFile').click()">Restore Data</button>
+<button onclick="exportSelectedToPDF()">Export Selected to PDF</button>
 
 <div id="output"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="app.js"></script>
 <script>
-  // Service worker
-  if ('serviceWorker' in navigator) {
+// Register service worker
+if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
-      .then(() => console.log('Service Worker registered'))
-      .catch(err => console.log('Service Worker registration failed:', err));
-  }
-
-  // Hook up Restore button -> open file picker
-  document.getElementById('restoreBtn').addEventListener('click', () => {
-    document.getElementById('importFile').click();
-  });
+        .then(() => console.log('Service Worker registered'))
+        .catch(err => console.log('Service Worker registration failed:', err));
+}
 </script>
+
 </body>
 </html>
