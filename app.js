@@ -1,3 +1,4 @@
+// Load sections from localStorage or default
 let sections = JSON.parse(localStorage.getItem("sections")) || {
     "Alcohol and Spirits": ["Whiskey", "Vodka", "Gin"],
     "Beer and Cider": ["Lager", "Ale", "Cider"],
@@ -14,6 +15,7 @@ let sections = JSON.parse(localStorage.getItem("sections")) || {
     "Sweets": ["Chocolate", "Candy"]
 };
 
+// Track selected items
 let selectedItems = JSON.parse(localStorage.getItem("selectedItems")) || {};
 
 function saveSections() {
@@ -22,6 +24,18 @@ function saveSections() {
 
 function saveSelectedItems() {
     localStorage.setItem("selectedItems", JSON.stringify(selectedItems));
+}
+
+function updateSelected(section, item, isChecked) {
+    if (!selectedItems[section]) selectedItems[section] = [];
+    if (isChecked) {
+        if (!selectedItems[section].includes(item)) {
+            selectedItems[section].push(item);
+        }
+    } else {
+        selectedItems[section] = selectedItems[section].filter(i => i !== item);
+    }
+    saveSelectedItems();
 }
 
 function renderList() {
@@ -38,34 +52,18 @@ function renderList() {
         h2.appendChild(addBtn);
         listDiv.appendChild(h2);
 
-        sections[section].forEach((item, index) => {
+        // Sort items alphabetically
+        const sortedItems = [...sections[section]].sort((a, b) => a.localeCompare(b));
+
+        sortedItems.forEach(item => {
             const div = document.createElement("div");
             div.className = "item";
 
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
-            checkbox.id = section + "_" + index;
-
-            if (selectedItems[section] && selectedItems[section].includes(index)) {
-                checkbox.checked = true;
-            }
-
-            checkbox.addEventListener("change", () => {
-                if (!selectedItems[section]) {
-                    selectedItems[section] = [];
-                }
-                if (checkbox.checked) {
-                    if (!selectedItems[section].includes(index)) {
-                        selectedItems[section].push(index);
-                    }
-                } else {
-                    selectedItems[section] = selectedItems[section].filter(i => i !== index);
-                    if (selectedItems[section].length === 0) {
-                        delete selectedItems[section];
-                    }
-                }
-                saveSelectedItems();
-            });
+            checkbox.id = section + "_" + item;
+            checkbox.checked = selectedItems[section]?.includes(item) || false;
+            checkbox.onchange = () => updateSelected(section, item, checkbox.checked);
 
             const label = document.createElement("label");
             label.htmlFor = checkbox.id;
@@ -74,7 +72,7 @@ function renderList() {
             const deleteBtn = document.createElement("button");
             deleteBtn.textContent = "×";
             deleteBtn.style.marginLeft = "10px";
-            deleteBtn.onclick = () => deleteItem(section, index);
+            deleteBtn.onclick = () => deleteItem(section, item);
 
             div.appendChild(checkbox);
             div.appendChild(label);
@@ -85,15 +83,10 @@ function renderList() {
     }
 }
 
-function deleteItem(section, index) {
-    if (confirm(`Delete "${sections[section][index]}" from ${section}?`)) {
-        sections[section].splice(index, 1);
+function deleteItem(section, item) {
+    if (confirm(`Delete "${item}" from ${section}?`)) {
+        sections[section] = sections[section].filter(i => i !== item);
         saveSections();
-
-        if (selectedItems[section]) {
-            selectedItems[section] = selectedItems[section].filter(i => i !== index);
-            saveSelectedItems();
-        }
         renderList();
     }
 }
@@ -101,9 +94,10 @@ function deleteItem(section, index) {
 function addItem(section) {
     const newItem = prompt("Enter new item name for " + section + ":");
     if (newItem && newItem.trim()) {
-        const name = newItem.trim();
-        if (!sections[section].includes(name)) {
-            sections[section].push(name);
+        const trimmed = newItem.trim();
+        if (!sections[section].includes(trimmed)) {
+            sections[section].push(trimmed);
+            sections[section].sort((a, b) => a.localeCompare(b));
             saveSections();
             renderList();
         } else {
@@ -113,92 +107,66 @@ function addItem(section) {
 }
 
 function showSelected() {
-    const output = {};
+    let output = "";
     for (const section in selectedItems) {
-        output[section] = selectedItems[section].map(i => sections[section][i]);
+        if (selectedItems[section].length > 0) {
+            const sorted = [...selectedItems[section]].sort((a, b) => a.localeCompare(b));
+            output += section + ":\n" + sorted.join("\n") + "\n\n";
+        }
     }
-    let result = "";
-    for (const section in output) {
-        result += section + ":\n" + output[section].join("\n") + "\n\n";
-    }
-    document.getElementById("output").textContent = result || "No items selected.";
+    document.getElementById("output").textContent = output || "No items selected.";
 }
 
-function exportData() {
-    const dataStr = JSON.stringify({ sections, selectedItems }, null, 2);
+// Backup and Restore
+function backupData() {
+    const dataStr = JSON.stringify({ sections, selectedItems });
     const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = "shop-data.json";
+    a.href = URL.createObjectURL(blob);
+    a.download = "shop_order_backup.json";
     a.click();
-    URL.revokeObjectURL(url);
 }
 
-function importData(event) {
-    const file = event.target.files && event.target.files[0];
+function restoreData(event) {
+    const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
         try {
-            const imported = JSON.parse(e.target.result);
-            if (imported && typeof imported === "object" && imported.sections) {
-                sections = imported.sections;
-                selectedItems = imported.selectedItems || {};
-                saveSections();
-                saveSelectedItems();
-                renderList();
-                alert("Data restored successfully!");
-            } else {
-                alert("Invalid data format.");
-            }
-        } catch (err) {
-            alert("Error reading file: " + err.message);
-        } finally {
-            event.target.value = "";
+            const data = JSON.parse(e.target.result);
+            sections = data.sections || sections;
+            selectedItems = data.selectedItems || {};
+            saveSections();
+            saveSelectedItems();
+            renderList();
+            alert("Data restored successfully!");
+        } catch {
+            alert("Invalid backup file.");
         }
     };
     reader.readAsText(file);
 }
 
-function exportSelectedToPDF() {
+// Export to PDF
+function exportPDF() {
+    let output = "";
+    for (const section in selectedItems) {
+        if (selectedItems[section].length > 0) {
+            const sorted = [...selectedItems[section]].sort((a, b) => a.localeCompare(b));
+            output += section + ":\n" + sorted.join("\n") + "\n\n";
+        }
+    }
+    if (!output) {
+        alert("No selected items to export.");
+        return;
+    }
+
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    let y = 10;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("Selected Items List", 10, y);
-    y += 10;
-
-    const selectedData = {};
-    for (const section in selectedItems) {
-        selectedData[section] = selectedItems[section].map(i => sections[section][i]);
-    }
-
     doc.setFontSize(12);
-    for (const section in selectedData) {
-        doc.setFont("helvetica", "bold");
-        doc.text(section, 10, y);
-        y += 6;
-        doc.setFont("helvetica", "normal");
-
-        selectedData[section].forEach(item => {
-            doc.text("- " + item, 14, y);
-            y += 6;
-            if (y > 280) {
-                doc.addPage();
-                y = 10;
-            }
-        });
-        y += 4;
-    }
-
-    doc.save("selected-items.pdf");
+    doc.text(output, 10, 10);
+    doc.save("selected_items.pdf");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("importFile").addEventListener("change", importData);
-    renderList();
-});
+// Initial render
+renderList();
