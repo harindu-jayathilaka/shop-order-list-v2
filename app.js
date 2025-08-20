@@ -157,42 +157,50 @@ function restoreData(event) {
     reader.readAsText(file);
 }
 
-// Export PDF with multi-page support and vertical item list
 function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 10;
-    const lineHeight = 8;
+    const margin = 15;
+    const lineHeight = 7;
 
     let y = margin;
 
-    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
     doc.text("Selected Shop Order List", margin, y);
     y += lineHeight * 2;
 
     for (const section in selectedItems) {
         const selected = selectedItems[section];
         if (selected && selected.length > 0) {
-            doc.setFontSize(12);
+            // Add extra space before each new section
+            y += lineHeight;
+
+            // Page break if needed
             if (y + lineHeight > pageHeight - margin) {
                 doc.addPage();
                 y = margin;
             }
-            doc.text(section + ":", margin, y);
-            y += lineHeight;
 
-            doc.setFontSize(10);
+            // Section header in bold
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(13);
+            doc.text(section, margin, y);
+            y += lineHeight; // small gap after header
+
+            // Section items
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
             selected.forEach(item => {
                 if (y + lineHeight > pageHeight - margin) {
                     doc.addPage();
                     y = margin;
                 }
-                doc.text("- " + item, margin + 10, y);
+                doc.text("• " + item, margin + 6, y); // bullet + indent
                 y += lineHeight;
             });
-
-            y += lineHeight;
         }
     }
 
@@ -200,6 +208,8 @@ function exportPDF() {
 }
 
 
+
 // Initial render
 renderList();
+
 
