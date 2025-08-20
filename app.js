@@ -15,7 +15,6 @@ let sections = JSON.parse(localStorage.getItem("sections")) || {
     "Sweets": ["Chocolate", "Candy"]
 };
 
-// Track selected items (with persistence)
 let selectedItems = JSON.parse(localStorage.getItem("selectedItems")) || {};
 
 function saveSections() {
@@ -37,10 +36,9 @@ function renderList() {
         addBtn.textContent = "+ Add Item";
         addBtn.onclick = () => addItem(section);
         h2.appendChild(addBtn);
-
         listDiv.appendChild(h2);
 
-        // Sort items alphabetically
+        // Sort items alphabetically before rendering
         sections[section].sort((a, b) => a.localeCompare(b));
 
         sections[section].forEach((item, index) => {
@@ -51,19 +49,37 @@ function renderList() {
             checkbox.type = "checkbox";
             checkbox.id = section + "_" + index;
             checkbox.checked = selectedItems[section]?.includes(item) || false;
-            checkbox.onchange = () => toggleSelection(section, item, checkbox.checked);
+            checkbox.onchange = () => {
+                if (!selectedItems[section]) selectedItems[section] = [];
+                if (checkbox.checked) {
+                    if (!selectedItems[section].includes(item)) {
+                        selectedItems[section].push(item);
+                    }
+                } else {
+                    selectedItems[section] = selectedItems[section].filter(i => i !== item);
+                }
+                saveSelections();
+            };
 
             const label = document.createElement("label");
             label.htmlFor = checkbox.id;
             label.textContent = item;
 
+            // Edit button
+            const editBtn = document.createElement("button");
+            editBtn.textContent = "✏️";
+            editBtn.style.marginLeft = "10px";
+            editBtn.onclick = () => editItem(section, index);
+
+            // Delete button
             const deleteBtn = document.createElement("button");
             deleteBtn.textContent = "×";
-            deleteBtn.style.marginLeft = "10px";
+            deleteBtn.style.marginLeft = "5px";
             deleteBtn.onclick = () => deleteItem(section, index);
 
             div.appendChild(checkbox);
             div.appendChild(label);
+            div.appendChild(editBtn);
             div.appendChild(deleteBtn);
 
             listDiv.appendChild(div);
@@ -71,31 +87,36 @@ function renderList() {
     }
 }
 
-function toggleSelection(section, item, isChecked) {
-    if (!selectedItems[section]) selectedItems[section] = [];
-    if (isChecked) {
-        if (!selectedItems[section].includes(item)) {
-            selectedItems[section].push(item);
-        }
-    } else {
-        selectedItems[section] = selectedItems[section].filter(i => i !== item);
-    }
-    saveSelections();
-}
-
 function deleteItem(section, index) {
     if (confirm(`Delete "${sections[section][index]}" from ${section}?`)) {
-        const removed = sections[section][index];
         sections[section].splice(index, 1);
-
-        // Also remove from selectedItems
-        if (selectedItems[section]) {
-            selectedItems[section] = selectedItems[section].filter(i => i !== removed);
-        }
-
         saveSections();
-        saveSelections();
         renderList();
+    }
+}
+
+function editItem(section, index) {
+    const currentName = sections[section][index];
+    const newName = prompt("Edit item name:", currentName);
+    if (newName && newName.trim()) {
+        if (!sections[section].includes(newName.trim())) {
+            // Update item in sections
+            sections[section][index] = newName.trim();
+
+            // Update item if it exists in selectedItems
+            if (selectedItems[section]) {
+                const pos = selectedItems[section].indexOf(currentName);
+                if (pos > -1) {
+                    selectedItems[section][pos] = newName.trim();
+                    saveSelections();
+                }
+            }
+
+            saveSections();
+            renderList();
+        } else {
+            alert("Item already exists in this section.");
+        }
     }
 }
 
@@ -122,7 +143,6 @@ function showSelected() {
     document.getElementById("output").textContent = output || "No items selected.";
 }
 
-// Backup & Restore
 function backupData() {
     const dataStr = JSON.stringify({ sections, selectedItems });
     const blob = new Blob([dataStr], { type: "application/json" });
@@ -130,27 +150,24 @@ function backupData() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "shop_order_backup.json";
+    a.download = "backup.json";
     a.click();
-
     URL.revokeObjectURL(url);
 }
 
 function restoreData(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = e => {
         try {
             const data = JSON.parse(e.target.result);
-            if (data.sections) sections = data.sections;
-            if (data.selectedItems) selectedItems = data.selectedItems;
+            sections = data.sections || sections;
+            selectedItems = data.selectedItems || {};
             saveSections();
             saveSelections();
             renderList();
-            alert("Data restored successfully!");
-        } catch {
+        } catch (err) {
             alert("Invalid backup file.");
         }
     };
@@ -175,22 +192,18 @@ function exportPDF() {
     for (const section in selectedItems) {
         const selected = selectedItems[section];
         if (selected && selected.length > 0) {
-            // Add extra space before each new section
             y += lineHeight;
 
-            // Page break if needed
             if (y + lineHeight > pageHeight - margin) {
                 doc.addPage();
                 y = margin;
             }
 
-            // Section header in bold
             doc.setFont("helvetica", "bold");
             doc.setFontSize(13);
             doc.text(section, margin, y);
-            y += lineHeight; // small gap after header
+            y += lineHeight;
 
-            // Section items
             doc.setFont("helvetica", "normal");
             doc.setFontSize(11);
             selected.forEach(item => {
@@ -198,7 +211,7 @@ function exportPDF() {
                     doc.addPage();
                     y = margin;
                 }
-                doc.text("• " + item, margin + 6, y); // bullet + indent
+                doc.text("• " + item, margin + 6, y);
                 y += lineHeight;
             });
         }
@@ -207,9 +220,5 @@ function exportPDF() {
     doc.save("Selected_Order_List.pdf");
 }
 
-
-
 // Initial render
 renderList();
-
-
