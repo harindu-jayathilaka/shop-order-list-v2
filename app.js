@@ -157,7 +157,7 @@ function restoreData(event) {
     reader.readAsText(file);
 }
 
-// Export PDF with multi-page support
+// Export PDF with multi-page support and vertical item list
 function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -183,13 +183,12 @@ function exportPDF() {
             y += lineHeight;
 
             doc.setFontSize(10);
-            const textLines = doc.splitTextToSize(selected.join(", "), 180);
-            textLines.forEach(line => {
+            selected.forEach(item => {
                 if (y + lineHeight > pageHeight - margin) {
                     doc.addPage();
                     y = margin;
                 }
-                doc.text(line, margin + 10, y);
+                doc.text("- " + item, margin + 10, y);
                 y += lineHeight;
             });
 
@@ -200,5 +199,7 @@ function exportPDF() {
     doc.save("Selected_Order_List.pdf");
 }
 
+
 // Initial render
 renderList();
+
