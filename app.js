@@ -1,4 +1,4 @@
-// Default sections and items
+// Load sections from localStorage or use defaults
 let sections = JSON.parse(localStorage.getItem("sections")) || {
     "Alcohol and Spirits": ["Whiskey", "Vodka", "Gin"],
     "Beer and Cider": ["Lager", "Ale", "Cider"],
@@ -15,6 +15,7 @@ let sections = JSON.parse(localStorage.getItem("sections")) || {
     "Sweets": ["Chocolate", "Candy"]
 };
 
+// Save selections separately
 let selectedItems = JSON.parse(localStorage.getItem("selectedItems")) || {};
 
 function saveSections() {
@@ -25,9 +26,11 @@ function saveSelections() {
     localStorage.setItem("selectedItems", JSON.stringify(selectedItems));
 }
 
+// Render all sections and items
 function renderList() {
     const listDiv = document.getElementById("list");
     listDiv.innerHTML = "";
+
     for (const section in sections) {
         const h2 = document.createElement("h2");
         h2.textContent = section;
@@ -38,7 +41,7 @@ function renderList() {
         h2.appendChild(addBtn);
         listDiv.appendChild(h2);
 
-        // Sort items alphabetically before rendering
+        // Sort items alphabetically
         sections[section].sort((a, b) => a.localeCompare(b));
 
         sections[section].forEach((item, index) => {
@@ -65,16 +68,18 @@ function renderList() {
             label.htmlFor = checkbox.id;
             label.textContent = item;
 
-            // Edit button
+            // ✎ Edit button (small icon)
             const editBtn = document.createElement("button");
-            editBtn.textContent = "✏️";
+            editBtn.textContent = "✎";
             editBtn.style.marginLeft = "10px";
+            editBtn.title = "Edit item";
             editBtn.onclick = () => editItem(section, index);
 
-            // Delete button
+            // × Delete button
             const deleteBtn = document.createElement("button");
             deleteBtn.textContent = "×";
             deleteBtn.style.marginLeft = "5px";
+            deleteBtn.title = "Delete item";
             deleteBtn.onclick = () => deleteItem(section, index);
 
             div.appendChild(checkbox);
@@ -96,27 +101,21 @@ function deleteItem(section, index) {
 }
 
 function editItem(section, index) {
-    const currentName = sections[section][index];
-    const newName = prompt("Edit item name:", currentName);
+    const oldName = sections[section][index];
+    const newName = prompt("Edit item name:", oldName);
     if (newName && newName.trim()) {
-        if (!sections[section].includes(newName.trim())) {
-            // Update item in sections
-            sections[section][index] = newName.trim();
+        sections[section][index] = newName.trim();
+        saveSections();
 
-            // Update item if it exists in selectedItems
-            if (selectedItems[section]) {
-                const pos = selectedItems[section].indexOf(currentName);
-                if (pos > -1) {
-                    selectedItems[section][pos] = newName.trim();
-                    saveSelections();
-                }
-            }
-
-            saveSections();
-            renderList();
-        } else {
-            alert("Item already exists in this section.");
+        // Update selections if item was selected
+        if (selectedItems[section]) {
+            selectedItems[section] = selectedItems[section].map(i =>
+                i === oldName ? newName.trim() : i
+            );
+            saveSelections();
         }
+
+        renderList();
     }
 }
 
@@ -134,30 +133,37 @@ function addItem(section) {
 }
 
 function showSelected() {
-    let output = "";
+    const selected = {};
     for (const section in selectedItems) {
         if (selectedItems[section].length > 0) {
-            output += section + ":\n" + selectedItems[section].join("\n") + "\n\n";
+            selected[section] = selectedItems[section];
         }
+    }
+    let output = "";
+    for (const section in selected) {
+        output += section + ":\n" + selected[section].join("\n") + "\n\n";
     }
     document.getElementById("output").textContent = output || "No items selected.";
 }
 
+// Backup all data
 function backupData() {
-    const dataStr = JSON.stringify({ sections, selectedItems });
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "backup.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    const data = {
+        sections: sections,
+        selectedItems: selectedItems
+    };
+    const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "backup.json";
+    link.click();
 }
 
+// Restore from backup file
 function restoreData(event) {
     const file = event.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = e => {
         try {
@@ -168,56 +174,46 @@ function restoreData(event) {
             saveSelections();
             renderList();
         } catch (err) {
-            alert("Invalid backup file.");
+            alert("Invalid backup file");
         }
     };
     reader.readAsText(file);
 }
 
+// Export selected items to PDF
 function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    let y = 20;
 
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
-    const lineHeight = 7;
-
-    let y = margin;
-
-    doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Selected Shop Order List", margin, y);
-    y += lineHeight * 2;
+    doc.text("Selected Items", 10, y);
+    y += 10;
 
     for (const section in selectedItems) {
-        const selected = selectedItems[section];
-        if (selected && selected.length > 0) {
-            y += lineHeight;
+        if (selectedItems[section].length > 0) {
+            // Section title bold
+            doc.setFont(undefined, "bold");
+            doc.text(section, 10, y);
+            y += 6;
 
-            if (y + lineHeight > pageHeight - margin) {
-                doc.addPage();
-                y = margin;
-            }
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(13);
-            doc.text(section, margin, y);
-            y += lineHeight;
-
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(11);
-            selected.forEach(item => {
-                if (y + lineHeight > pageHeight - margin) {
+            // Section items
+            doc.setFont(undefined, "normal");
+            selectedItems[section].forEach(item => {
+                if (y > 280) {
                     doc.addPage();
-                    y = margin;
+                    y = 20;
                 }
-                doc.text("• " + item, margin + 6, y);
-                y += lineHeight;
+                doc.text("- " + item, 15, y);
+                y += 6;
             });
+
+            // Space after section
+            y += 4;
         }
     }
 
-    doc.save("Selected_Order_List.pdf");
+    doc.save("selected_items.pdf");
 }
 
 // Initial render
