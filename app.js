@@ -68,7 +68,7 @@ function renderList() {
             label.htmlFor = checkbox.id;
             label.textContent = item;
 
-            // ✎ Edit button (small icon)
+            // ✎ Edit button
             const editBtn = document.createElement("button");
             editBtn.textContent = "✎";
             editBtn.style.marginLeft = "10px";
@@ -170,6 +170,18 @@ function restoreData(event) {
             const data = JSON.parse(e.target.result);
             sections = data.sections || sections;
             selectedItems = data.selectedItems || {};
+
+            // 🧹 Cleanup selections
+            for (const section in selectedItems) {
+                if (!sections[section]) {
+                    delete selectedItems[section];
+                } else {
+                    selectedItems[section] = selectedItems[section].filter(item =>
+                        sections[section].includes(item)
+                    );
+                }
+            }
+
             saveSections();
             saveSelections();
             renderList();
