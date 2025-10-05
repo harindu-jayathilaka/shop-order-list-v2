@@ -146,6 +146,16 @@ function showSelected() {
     document.getElementById("output").textContent = output || "No items selected.";
 }
 
+//unselect all
+function unselectAll() {
+    if (confirm("Are you sure you want to unselect all items?")) {
+        selectedItems = {};
+        saveSelections();
+        renderList();
+        document.getElementById("output").textContent = "All items unselected.";
+    }
+}
+
 // Backup all data
 function backupData() {
     const data = {
@@ -230,3 +240,4 @@ function exportPDF() {
 
 // Initial render
 renderList();
+
