@@ -29,14 +29,14 @@ function renderList() {
   listDiv.innerHTML = "";
 
   for (const section in sections) {
-    sections[section].sort((a, b) => a.localeCompare(b)); // Sort alphabetically
+    sections[section].sort((a, b) => a.localeCompare(b));
 
     const h2 = document.createElement("h2");
+    h2.id = "section-" + section.replace(/\s+/g, "-");
     const sectionName = document.createElement("span");
     sectionName.className = "section-name";
     sectionName.textContent = section;
     h2.appendChild(sectionName);
-    h2.id = "section-" + section.replace(/\s+/g, "-");
 
     const addBtn = document.createElement("button");
     addBtn.textContent = "+ Add Item";
@@ -59,9 +59,7 @@ function renderList() {
             selectedItems[section].push(item);
         } else {
           selectedItems[section] = selectedItems[section].filter(i => i !== item);
-          if(selectedItems[section].length === 0){
-            delete selectedItems[section];
-          }
+          if (selectedItems[section].length === 0) delete selectedItems[section];
         }
         saveSelectedItems();
       };
@@ -70,45 +68,50 @@ function renderList() {
       label.htmlFor = checkbox.id;
       label.textContent = item;
 
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "🗑";
-      deleteBtn.style.marginLeft = "8px";
-      deleteBtn.onclick = () => deleteItem(section, index);
-
       const editBtn = document.createElement("button");
       editBtn.textContent = "✏️";
       editBtn.style.marginLeft = "6px";
       editBtn.onclick = () => editItem(section, index);
 
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "🗑";
+      deleteBtn.style.marginLeft = "6px";
+      deleteBtn.onclick = () => deleteItem(section, index);
+
       div.appendChild(checkbox);
       div.appendChild(label);
       div.appendChild(editBtn);
       div.appendChild(deleteBtn);
-
       listDiv.appendChild(div);
     });
   }
   renderGotoButtons();
 }
 
-function editItem(section, index) {
-  const oldName = sections[section][index];
-  const newName = prompt("Edit item name:", oldName);
-  if (newName && newName.trim()) {
-    const trimmedName = newName.trim();
-    // Prevent duplicate
-    if (sections[section].includes(trimmedName) && trimmedName !== oldName) {
+function addItem(section) {
+  const newItem = prompt(`Enter new item name for ${section}:`);
+  if (newItem && newItem.trim()) {
+    const name = newItem.trim();
+    if (!sections[section].includes(name)) {
+      sections[section].push(name);
+      saveSections();
+      renderList();
+    } else {
       alert("Item already exists in this section.");
-      return;
     }
-    sections[section][index] = trimmedName;
+  }
+}
 
-    // Update selectedItems if oldName was selected
+function editItem(section, index) {
+  const oldItem = sections[section][index];
+  const newName = prompt("Edit item name:", oldItem);
+  if (newName && newName.trim()) {
+    const name = newName.trim();
+    sections[section][index] = name;
+
     if (selectedItems[section]) {
-      const selectedIndex = selectedItems[section].indexOf(oldName);
-      if (selectedIndex !== -1) {
-        selectedItems[section][selectedIndex] = trimmedName;
-      }
+      const idx = selectedItems[section].indexOf(oldItem);
+      if (idx > -1) selectedItems[section][idx] = name;
     }
 
     saveSections();
@@ -118,34 +121,15 @@ function editItem(section, index) {
 }
 
 function deleteItem(section, index) {
-  if (confirm(`Delete "${sections[section][index]}" from ${section}?`)) {
-    const itemName = sections[section][index];
+  const item = sections[section][index];
+  if (confirm(`Delete "${item}" from ${section}?`)) {
     sections[section].splice(index, 1);
-
-    if (selectedItems[section]) {
-      selectedItems[section] = selectedItems[section].filter(i => i !== itemName);
-      if(selectedItems[section].length === 0){
-        delete selectedItems[section];
-      }
-    }
-
+    if (selectedItems[section])
+      selectedItems[section] = selectedItems[section].filter(i => i !== item);
+    if (selectedItems[section]?.length === 0) delete selectedItems[section];
     saveSections();
     saveSelectedItems();
     renderList();
-  }
-}
-
-function addItem(section) {
-  const newItem = prompt(`Enter new item name for ${section}:`);
-  if (newItem && newItem.trim()) {
-    const trimmedItem = newItem.trim();
-    if (!sections[section].includes(trimmedItem)) {
-      sections[section].push(trimmedItem);
-      saveSections();
-      renderList();
-    } else {
-      alert("Item already exists in this section.");
-    }
   }
 }
 
@@ -153,7 +137,7 @@ function showSelected() {
   let output = "";
   for (const section in selectedItems) {
     if (selectedItems[section].length > 0) {
-      output += section + ":\n" + selectedItems[section].join("\n") + "\n\n";
+      output += `${section}:\n${selectedItems[section].join("\n")}\n\n`;
     }
   }
   document.getElementById("output").textContent = output || "No items selected.";
@@ -162,10 +146,7 @@ function showSelected() {
 function scrollToOutput() {
   const output = document.getElementById('output');
   showSelected();
-  output.scrollIntoView({ 
-    behavior: 'smooth',
-    block: 'start'
-  });
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function unselectAll() {
@@ -196,16 +177,12 @@ function restoreData() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = event => {
-      try {
-        const data = JSON.parse(event.target.result);
-        if (data.sections) sections = data.sections;
-        if (data.selectedItems) selectedItems = data.selectedItems;
-        saveSections();
-        saveSelectedItems();
-        renderList();
-      } catch (err) {
-        alert("Failed to parse JSON file.");
-      }
+      const data = JSON.parse(event.target.result);
+      if (data.sections) sections = data.sections;
+      if (data.selectedItems) selectedItems = data.selectedItems;
+      saveSections();
+      saveSelectedItems();
+      renderList();
     };
     reader.readAsText(file);
   };
@@ -221,15 +198,12 @@ function exportToPDF() {
     if (selectedItems[section].length > 0) {
       doc.setFont("helvetica", "bold");
       doc.text(section, 10, y);
-      y += 7;
+      y += 5;
       doc.setFont("helvetica", "normal");
       selectedItems[section].forEach(item => {
-        if (y > 280) { 
-          doc.addPage(); 
-          y = 10; 
-        }
+        if (y > 280) { doc.addPage(); y = 10; }
         doc.text("- " + item, 14, y);
-        y += 7;
+        y += 5;
       });
       y += 5;
     }
@@ -238,14 +212,14 @@ function exportToPDF() {
   doc.save("Selected_Items.pdf");
 }
 
-// Floating Add Button Logic
+// Track visible section for floating add button
 window.addEventListener("scroll", () => {
-  const sectionsHeadings = document.querySelectorAll("h2");
+  const headings = document.querySelectorAll("h2");
   let current = currentVisibleSection;
-  sectionsHeadings.forEach((heading) => {
-    const rect = heading.getBoundingClientRect();
+  headings.forEach(h => {
+    const rect = h.getBoundingClientRect();
     if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
-      current = heading.querySelector(".section-name").textContent;
+      current = h.querySelector(".section-name").textContent;
     }
   });
   currentVisibleSection = current;
@@ -255,44 +229,37 @@ function addItemToVisibleSection() {
   addItem(currentVisibleSection);
 }
 
-// Render "Go To Section" buttons below main controls
 function renderGotoButtons() {
-  const container = document.getElementById('goto-buttons');
-  container.innerHTML = "";
-  for (const section of Object.keys(sections)) {
-    const btn = document.createElement('button');
+  const gotoDiv = document.getElementById("goto-buttons");
+  gotoDiv.innerHTML = "";
+  for (const section in sections) {
+    const btn = document.createElement("button");
     btn.textContent = section;
-    btn.title = "Go to " + section;
     btn.onclick = () => {
-      const el = document.getElementById("section-" + section.replace(/\s+/g, "-"));
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const target = document.getElementById("section-" + section.replace(/\s+/g, "-"));
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     };
-    container.appendChild(btn);
+    gotoDiv.appendChild(btn);
   }
 }
 
-// Minimize/Restore Bottom Control Panel
-const panel = document.getElementById('bottom-panel');
-const toggleBtn = document.getElementById('toggle-panel-btn');
-
-toggleBtn.addEventListener('click', () => {
-  panel.classList.toggle('minimized');
-  if (panel.classList.contains('minimized')) {
-    toggleBtn.textContent = '▼';
-    localStorage.setItem('panelMinimized', 'true');
-  } else {
-    toggleBtn.textContent = '▲';
-    localStorage.setItem('panelMinimized', 'false');
-  }
-});
-
-// Restore panel state on load
+// Panel toggle
 window.addEventListener('DOMContentLoaded', () => {
+  const panel = document.getElementById('bottom-panel');
+  const toggleBtn = document.getElementById('toggle-panel-btn');
+
+  toggleBtn.addEventListener('click', () => {
+    panel.classList.toggle('minimized');
+    toggleBtn.textContent = panel.classList.contains('minimized') ? '▼' : '▲';
+    localStorage.setItem('panelMinimized', panel.classList.contains('minimized'));
+  });
+
   if (localStorage.getItem('panelMinimized') === 'true') {
     panel.classList.add('minimized');
     toggleBtn.textContent = '▼';
   }
+
   renderList();
 });
