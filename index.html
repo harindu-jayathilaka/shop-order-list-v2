@@ -12,7 +12,7 @@
   body {
     font-family: Arial, sans-serif;
     margin: 20px;
-    padding-bottom: 120px;
+    padding-bottom: 140px;
   }
   h1 {
     text-align: center;
@@ -48,85 +48,81 @@
     background: #ffffff;
     border-top: 2px solid #e0e0e0;
     padding: 15px 20px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
     transition: height 0.3s ease, padding 0.3s ease;
   }
 
-  /* Control buttons container */
-  .bottom-control-panel .control-buttons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    flex: 1;
+  /* Minimized state */
+  .bottom-control-panel.minimized {
+    height: 40px;
+    padding: 8px 20px;
+    overflow: hidden;
   }
 
-  /* Main control buttons */
-  .bottom-control-panel button.control-btn {
-    flex: 1;
+  .bottom-control-panel .top-buttons,
+  .bottom-control-panel .section-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .bottom-control-panel .top-buttons button,
+  .bottom-control-panel .section-buttons button {
+    flex: none;
     min-width: 80px;
     padding: 8px 12px;
     font-size: 13px;
     background: #f5f5f5;
     border: 1px solid #ddd;
     border-radius: 6px;
+    white-space: nowrap;
   }
-  .bottom-control-panel button.control-btn:hover {
+
+  .bottom-control-panel .top-buttons button:hover,
+  .bottom-control-panel .section-buttons button:hover {
     background: #e9e9e9;
   }
 
-  /* Go To Section Buttons Container */
-  .goto-buttons {
-    display: flex;
+  .bottom-control-panel .section-buttons {
     overflow-x: auto;
-    gap: 6px;
     padding-bottom: 5px;
+    scrollbar-width: thin;
+    scrollbar-color: #bbb transparent;
   }
-  .goto-buttons button {
-    flex: 0 0 auto;
-    padding: 6px 14px;
-    font-size: 12px;
-    background: #e0f0ff;
-    border: 1px solid #9ac4ff;
-    border-radius: 20px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background-color 0.2s ease;
+  .bottom-control-panel .section-buttons::-webkit-scrollbar {
+    height: 6px;
   }
-  .goto-buttons button:hover {
-    background-color: #b3d7ff;
+  .bottom-control-panel .section-buttons::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .bottom-control-panel .section-buttons::-webkit-scrollbar-thumb {
+    background-color: #bbb;
+    border-radius: 3px;
   }
 
-  /* Minimize Toggle Button */
+  /* Toggle button for minimizing */
   #toggle-panel-btn {
     align-self: flex-end;
     background: #2196f3;
     color: white;
     border: none;
     border-radius: 4px;
-    width: 30px;
-    height: 30px;
-    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
     line-height: 0;
     cursor: pointer;
+    padding: 0;
+    margin: 0;
+    touch-action: manipulation;
+    user-select: none;
     transition: background-color 0.3s ease;
   }
   #toggle-panel-btn:hover {
     background: #1976d2;
-  }
-
-  /* Minimized panel styles */
-  .bottom-control-panel.minimized {
-    padding: 5px 20px;
-    height: 40px; /* enough for toggle button */
-    overflow: hidden;
-  }
-  .bottom-control-panel.minimized .control-buttons,
-  .bottom-control-panel.minimized .goto-buttons {
-    display: none;
   }
 
   /* Floating Add Button - Bottom Right Corner */
@@ -148,6 +144,7 @@
     align-items: center;
     justify-content: center;
   }
+
   .floating-add-btn:hover {
     background: #1976d2;
   }
@@ -170,14 +167,19 @@
     .bottom-control-panel {
       padding: 12px 15px;
     }
-    .bottom-control-panel .control-buttons {
+
+    .bottom-control-panel .top-buttons,
+    .bottom-control-panel .section-buttons {
       gap: 6px;
     }
-    .bottom-control-panel button.control-btn {
+
+    .bottom-control-panel .top-buttons button,
+    .bottom-control-panel .section-buttons button {
       min-width: 70px;
       font-size: 12px;
       padding: 7px 10px;
     }
+
     .floating-add-btn {
       bottom: 80px;
       right: 20px;
@@ -186,18 +188,18 @@
       font-size: 28px;
     }
   }
+
   @media (max-width: 480px) {
     body {
       margin: 15px;
       padding-bottom: 110px;
     }
+
     .bottom-control-panel {
       flex-direction: column;
       gap: 8px;
     }
-    .bottom-control-panel .control-buttons {
-      width: 100%;
-    }
+
     .floating-add-btn {
       bottom: 95px;
     }
@@ -214,39 +216,23 @@
 
 <!-- Wide Bottom Control Panel -->
 <div class="bottom-control-panel" id="bottom-panel">
-  <div class="control-buttons">
-    <button class="control-btn" onclick="showSelected()">Show Selected</button>
-    <button class="control-btn" onclick="scrollToOutput()">Go to Selected</button>
-    <button class="control-btn" onclick="unselectAll()">Unselect All</button>
-    <button class="control-btn" onclick="backupData()">Backup</button>
-    <button class="control-btn" onclick="restoreData()">Restore</button>
-    <button class="control-btn" onclick="exportToPDF()">Export PDF</button>
+  <div class="top-buttons control-buttons">
+    <button onclick="showSelected()">Show Selected</button>
+    <button onclick="scrollToOutput()">Go to Selected</button>
+    <button onclick="unselectAll()">Unselect All</button>
+    <button onclick="backupData()">Backup</button>
+    <button onclick="restoreData()">Restore</button>
+    <button onclick="exportToPDF()">Export PDF</button>
   </div>
-  <div class="goto-buttons" id="goto-buttons"></div>
-  <button id="toggle-panel-btn" title="Minimize/Restore Panel">▲</button>
+  <div class="section-buttons" id="section-buttons-container" aria-label="Section navigation buttons">
+    <!-- Section buttons inserted here dynamically -->
+  </div>
+  <button id="toggle-panel-btn" aria-label="Toggle control panel minimize">▲</button>
 </div>
 
 <div id="output"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="app.js"></script>
-<script>
-  // Scroll to output wrapper
-  function scrollToOutput() {
-    const output = document.getElementById('output');
-    showSelected(); // Update output text before scrolling
-    output.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
-    });
-  }
-
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log('Service Worker registered'))
-      .catch(err => console.log('Service Worker registration failed:', err));
-  }
-</script>
-
 </body>
 </html>
