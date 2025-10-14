@@ -1,238 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Shop Order List</title>
-<link rel="manifest" href="manifest.json" />
-<link rel="apple-touch-icon" href="icon-192.png" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="Shop Order List" />
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    padding-bottom: 140px;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-  h2 {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
-  }
-  input[type="checkbox"] {
-    margin-right: 10px;
-  }
-  button {
-    margin: 5px 0;
-    padding: 5px 10px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-
-  /* Wide Bottom Control Panel */
-  .bottom-control-panel {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #ffffff;
-    border-top: 2px solid #e0e0e0;
-    padding: 15px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    transition: height 0.3s ease, padding 0.3s ease;
-  }
-
-  /* Minimized state */
-  .bottom-control-panel.minimized {
-    height: 40px;
-    padding: 8px 20px;
-    overflow: hidden;
-  }
-
-  .bottom-control-panel .top-buttons,
-  .bottom-control-panel .section-buttons {
-    display: flex;
-    gap: 8px;
-  }
-
-  .bottom-control-panel .top-buttons button,
-  .bottom-control-panel .section-buttons button {
-    flex: none;
-    min-width: 80px;
-    padding: 8px 12px;
-    font-size: 13px;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    white-space: nowrap;
-  }
-
-  .bottom-control-panel .top-buttons button:hover,
-  .bottom-control-panel .section-buttons button:hover {
-    background: #e9e9e9;
-  }
-
-  .bottom-control-panel .section-buttons {
-    overflow-x: auto;
-    padding-bottom: 5px;
-    scrollbar-width: thin;
-    scrollbar-color: #bbb transparent;
-  }
-  .bottom-control-panel .section-buttons::-webkit-scrollbar {
-    height: 6px;
-  }
-  .bottom-control-panel .section-buttons::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .bottom-control-panel .section-buttons::-webkit-scrollbar-thumb {
-    background-color: #bbb;
-    border-radius: 3px;
-  }
-
-  /* Toggle button for minimizing */
-  #toggle-panel-btn {
-    align-self: flex-end;
-    background: #2196f3;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    width: 36px;
-    height: 36px;
-    font-size: 20px;
-    line-height: 0;
-    cursor: pointer;
-    padding: 0;
-    margin: 0;
-    touch-action: manipulation;
-    user-select: none;
-    transition: background-color 0.3s ease;
-  }
-  #toggle-panel-btn:hover {
-    background: #1976d2;
-  }
-
-  /* Floating Add Button - Bottom Right Corner */
-  .floating-add-btn {
-    position: fixed;
-    bottom: 85px;
-    right: 25px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #2196f3;
-    color: white;
-    font-size: 30px;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1001;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .floating-add-btn:hover {
-    background: #1976d2;
-  }
-
-  #output {
-    white-space: pre-line;
-    margin-top: 10px;
-    background: #f4f4f4;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-
-  h2 span.section-name {
-    font-weight: bold;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .bottom-control-panel {
-      padding: 12px 15px;
-    }
-
-    .bottom-control-panel .top-buttons,
-    .bottom-control-panel .section-buttons {
-      gap: 6px;
-    }
-
-    .bottom-control-panel .top-buttons button,
-    .bottom-control-panel .section-buttons button {
-      min-width: 70px;
-      font-size: 12px;
-      padding: 7px 10px;
-    }
-
-    .floating-add-btn {
-      bottom: 80px;
-      right: 20px;
-      width: 55px;
-      height: 55px;
-      font-size: 28px;
-    }
-  }
-
-  @media (max-width: 480px) {
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shop Order List</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Shop Order List">
+  <style>
     body {
-      margin: 15px;
-      padding-bottom: 110px;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding-bottom: 150px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #output {
+      white-space: pre-line;
+      margin-top: 10px;
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
     .bottom-control-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-top: 2px solid #e0e0e0;
+      padding: 10px 15px;
+      display: flex;
       flex-direction: column;
+      align-items: stretch;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+
+    .bottom-control-panel.minimized {
+      transform: translateY(calc(100% - 38px));
+    }
+
+    .control-buttons, #goto-buttons {
+      display: flex;
+      overflow-x: auto;
       gap: 8px;
+      margin: 5px 0;
+    }
+
+    .control-buttons button, #goto-buttons button {
+      flex: 0 0 auto;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+
+    .control-buttons button:hover, #goto-buttons button:hover {
+      background: #e0e0e0;
     }
 
     .floating-add-btn {
-      bottom: 95px;
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #2196F3;
+      color: white;
+      font-size: 30px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-  }
-</style>
+
+    .floating-add-btn:hover {
+      background: #1976D2;
+    }
+
+    #toggle-panel-btn {
+      align-self: flex-end;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+      line-height: 0;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    @media (max-width: 768px) {
+      .bottom-control-panel {
+        padding: 8px 10px;
+      }
+      .floating-add-btn {
+        bottom: 95px;
+        right: 15px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<h1>Shop Order List</h1>
-<div id="list"></div>
+  <h1>Shop Order List</h1>
+  <div id="list"></div>
 
-<!-- Floating Add Item Button -->
-<button class="floating-add-btn" onclick="addItemToVisibleSection()" title="Add item to current section">+</button>
+  <button class="floating-add-btn" onclick="addItemToVisibleSection()" title="Add item to current section">+</button>
 
-<!-- Wide Bottom Control Panel -->
-<div class="bottom-control-panel" id="bottom-panel">
-  <div class="top-buttons control-buttons">
-    <button onclick="showSelected()">Show Selected</button>
-    <button onclick="scrollToOutput()">Go to Selected</button>
-    <button onclick="unselectAll()">Unselect All</button>
-    <button onclick="backupData()">Backup</button>
-    <button onclick="restoreData()">Restore</button>
-    <button onclick="exportToPDF()">Export PDF</button>
+  <!-- Bottom Control Panel -->
+  <div class="bottom-control-panel" id="bottom-panel">
+    <button id="toggle-panel-btn" title="Minimize panel">▲</button>
+
+    <div class="control-buttons">
+      <button onclick="showSelected()">Show Selected</button>
+      <button onclick="scrollToOutput()">Go to Selected</button>
+      <button onclick="unselectAll()">Unselect All</button>
+      <button onclick="backupData()">Backup</button>
+      <button onclick="restoreData()">Restore</button>
+      <button onclick="exportToPDF()">Export PDF</button>
+    </div>
+
+    <!-- Go To Section Buttons -->
+    <div id="goto-buttons"></div>
   </div>
-  <div class="section-buttons" id="section-buttons-container" aria-label="Section navigation buttons">
-    <!-- Section buttons inserted here dynamically -->
-  </div>
-  <button id="toggle-panel-btn" aria-label="Toggle control panel minimize">▲</button>
-</div>
 
-<div id="output"></div>
+  <div id="output"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
+
 </body>
 </html>
